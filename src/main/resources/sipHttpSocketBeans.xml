@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+
+    <!--
+        The object used for creating java.net.Socket instances using SIP to
+        signal the connection.
+    -->
+    <bean id="sipSocketFactory"
+          class="org.lastbamboo.common.sip.httpclient.SipSocketFactoryImpl">
+        <constructor-arg><ref bean="sipClientTracker"/></constructor-arg>
+        <constructor-arg><ref bean="iceCandidateFactory"/></constructor-arg>
+        <constructor-arg><ref bean="sdpFactory"/></constructor-arg>
+    </bean>
+
+    <!--
+        The object used to create sockets for HttpClient for SIP sessions.
+    -->
+    <bean id="sipProtocolSocketFactory"
+          class="org.lastbamboo.common.sip.httpclient.SipProtocolSocketFactory">
+        <constructor-arg><ref local="sipSocketFactory"/></constructor-arg>
+        <constructor-arg><ref bean="sipUriFactory"/></constructor-arg>
+        </bean>
+
+    <!--
+        The HttpClient Protocol backed by our SIP sockets.
+    -->
+    <bean id="sipProtocol"
+          class="org.apache.commons.httpclient.protocol.Protocol">
+        <constructor-arg type="java.lang.String">
+            <value>${protocol}</value>
+            </constructor-arg>
+        <constructor-arg>
+            <ref local="sipProtocolSocketFactory"/>
+            </constructor-arg>
+        <constructor-arg type="int">
+            <value>80</value>
+            </constructor-arg>
+        </bean>
+
+    <!--
+        Calls the static method to register our custom protocol.
+    -->
+    <bean id="registerProtocol"
+          class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+        <property name="staticMethod">
+            <value>org.apache.commons.httpclient.protocol.Protocol.registerProtocol</value>
+            </property>
+        <property name="arguments">
+            <list>
+                <value>${protocol}</value>
+                <ref local="sipProtocol"/>
+                </list>
+            </property>
+        </bean>
+    </beans>
