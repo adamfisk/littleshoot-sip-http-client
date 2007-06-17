@@ -1,7 +1,6 @@
 package org.lastbamboo.common.sip.httpclient;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.URI;
 import java.util.Collection;
@@ -123,12 +122,13 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
      */
     public Socket resolveSocket(final URI sipUri) throws IOException
         {
-        LOG.trace("Resolving socket for URI: "+sipUri);
+        LOG.debug("Resolving socket for URI: "+sipUri);
         try
             {
             // Create the SDP string with addresses derived using STUN, TURN,
             // etc.
             final SessionDescription sdp = this.m_sdpFactory.createSdp();
+            LOG.debug("Sending SDP: "+sdp.toString());
             this.m_sipClient.invite(sipUri, sdp.toBytes(), this);
 
             return waitForSocket(sipUri);
