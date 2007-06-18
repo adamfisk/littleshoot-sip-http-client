@@ -6,8 +6,8 @@ import java.net.URI;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.lastbamboo.common.ice.IceCandidateFactory;
-import org.lastbamboo.common.ice.sdp.SdpFactory;
+import org.lastbamboo.common.answer.AnswerProcessor;
+import org.lastbamboo.common.offer.OfferGenerator;
 import org.lastbamboo.common.sip.client.SipClient;
 import org.lastbamboo.common.sip.client.SipClientTracker;
 
@@ -21,31 +21,28 @@ public final class SipSocketFactoryImpl implements SipSocketFactory
      */
     private static final Log LOG =
         LogFactory.getLog (SipSocketFactoryImpl.class);
-    
-    /**
-     * The factory to use for creating SDP data.
-     */
-    private final SdpFactory m_sdpFactory;
-
-    private final IceCandidateFactory m_iceCandidateFactory;
 
     private final SipClientTracker m_sipClientTracker;
+
+    private final OfferGenerator m_offerGenerator;
+
+    private final AnswerProcessor m_answerProcessor;
     
     /**
      * Creates a new factory for creating SIP sockets.
      * 
+     * @param offerGenerator The class for creating the offer to send with
+     * the SIP INVITE message.
+     * @param answerProcessor The class for processing any answer received.
      * @param sipClientTracker The class for keeping track of SIP clients.
-     * @param iceCandidateFactory The factory for creating ICE candidates from
-     * wire SDP data.
-     * @param sdpFactory The class for creating SDP from wire data.
      */
-    public SipSocketFactoryImpl(final SipClientTracker sipClientTracker,
-        final IceCandidateFactory iceCandidateFactory,
-        final SdpFactory sdpFactory)
+    public SipSocketFactoryImpl(final OfferGenerator offerGenerator,
+        final AnswerProcessor answerProcessor,
+        final SipClientTracker sipClientTracker)
         {
-        this.m_sipClientTracker = sipClientTracker;
-        this.m_iceCandidateFactory = iceCandidateFactory;
-        this.m_sdpFactory = sdpFactory;
+        m_offerGenerator = offerGenerator;
+        m_answerProcessor = answerProcessor;
+        m_sipClientTracker = sipClientTracker;
         }
     
     public Socket createSipSocket (final URI sipUri) throws IOException
@@ -60,7 +57,7 @@ public final class SipSocketFactoryImpl implements SipSocketFactory
             }
         
         final SipSocketResolver resolver = new SipSocketResolverImpl (
-            this.m_sdpFactory, client, this.m_iceCandidateFactory);
+            this.m_offerGenerator, this.m_answerProcessor, client);
 
         return (resolver.resolveSocket (sipUri));
         }

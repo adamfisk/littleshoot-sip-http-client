@@ -3,23 +3,15 @@ package org.lastbamboo.common.sip.httpclient;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URI;
-import java.util.Collection;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.mina.common.ByteBuffer;
-import org.lastbamboo.common.ice.IceCandidateFactory;
-import org.lastbamboo.common.ice.IceCandidateTracker;
-import org.lastbamboo.common.ice.IceException;
-import org.lastbamboo.common.ice.UacIceCandidateTracker;
-import org.lastbamboo.common.ice.sdp.SdpFactory;
-import org.lastbamboo.common.sdp.api.SdpException;
-import org.lastbamboo.common.sdp.api.SdpParseException;
-import org.lastbamboo.common.sdp.api.SessionDescription;
+import org.lastbamboo.common.answer.AnswerProcessor;
+import org.lastbamboo.common.offer.OfferGenerator;
 import org.lastbamboo.common.sip.client.SipClient;
 import org.lastbamboo.common.sip.stack.message.SipMessage;
 import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionListener;
-import org.lastbamboo.common.util.mina.MinaUtils;
 
 /**
  * This class generates a socket using SIP to negotiate the session.  
@@ -44,7 +36,7 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
      * The factory for creating SDP data for allowing the UAS in the
      * session to contact us.
      */
-    private final SdpFactory m_sdpFactory;
+    private final OfferGenerator m_offerGenerator;
 
     /**
      * The generated socket.
@@ -58,11 +50,7 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
      */
     private final Object m_socketLock = new Object();
 
-    private final IceCandidateTracker m_iceCandidateTracker;
-
     private final SipClient m_sipClient;
-
-    private final IceCandidateFactory m_iceCandidateFactory;
 
     /**
      * Whether or not we've finished waiting for the socket.
@@ -74,6 +62,8 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
      */
     private long m_startTime;
 
+    private final AnswerProcessor m_answerProcessor;
+
     /**
      * Creates a new socket resolver that uses the specified collaborator
      * classes to create sockets using sip to initiate the session.  The
@@ -81,25 +71,18 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
      * will return some class that either is a straight java.net.Socket or
      * a custom subclass.
      * 
-     * @param factory The factory for creating the SDP to pass over SIP.
+     * @param offerGenerator The class for creating the offer to send with
+     * the SIP INVITE message.
+     * @param answerProcessor The class for processing any answer received.
      * @param sipClient The SIP client for sending SIP messages through a proxy.
-     * @param iceCandidateFactory The factory for creating ICE candidates from
-     * the remote host's SDP.
      */
-    public SipSocketResolverImpl(
-        final SdpFactory factory,
-        final SipClient sipClient, 
-        final IceCandidateFactory iceCandidateFactory)
+    public SipSocketResolverImpl(final OfferGenerator offerGenerator,
+        final AnswerProcessor answerProcessor, final SipClient sipClient)
         {
-        this.m_sdpFactory = factory;
+        this.m_offerGenerator = offerGenerator;
+        this.m_answerProcessor = answerProcessor;
         this.m_sipClient = sipClient;
 
-        this.m_iceCandidateFactory = iceCandidateFactory;
-
-        // Create our new tracker for ICE connection candidates now, as this
-        // will be collecting data at various points of the SIP negotiation.
-        this.m_iceCandidateTracker = new UacIceCandidateTracker();
-        
         this.m_finishedWaitingForSocket = false;
         }
     
@@ -123,21 +106,12 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
     public Socket resolveSocket(final URI sipUri) throws IOException
         {
         LOG.debug("Resolving socket for URI: "+sipUri);
-        try
-            {
-            // Create the SDP string with addresses derived using STUN, TURN,
-            // etc.
-            final SessionDescription sdp = this.m_sdpFactory.createSdp();
-            LOG.debug("Sending SDP: "+sdp.toString());
-            this.m_sipClient.invite(sipUri, sdp.toBytes(), this);
+        // Create the SDP string with addresses derived using STUN, TURN,
+        // etc.
+        final byte[] offer = this.m_offerGenerator.generateOffer();
+        this.m_sipClient.invite(sipUri, offer, this);
 
-            return waitForSocket(sipUri);
-            }
-        catch (final SdpException e)
-            {
-            LOG.warn("Could not create SDP", e);
-            throw new IOException("Could not handle SDP: "+e.getMessage());
-            }
+        return waitForSocket(sipUri);
         }
 
     /**
@@ -206,56 +180,24 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
         if (LOG.isDebugEnabled())
             {
             LOG.debug("Successful transaction after " + getElapsedTime() +
-                         " milliseconds...");
+                " milliseconds...");
             }
+        // Determine the ICE candidates for socket creation from the
+        // response body.
+        final ByteBuffer responseBody = response.getBody();
         
         try
             {
-            // Determine the ICE candidates for socket creation from the
-            // response body.
-            final ByteBuffer responseBody = response.getBody();
-            final String responseBodyString = 
-                MinaUtils.toAsciiString(responseBody);
-            
-            final SessionDescription sdp = 
-                m_sdpFactory.createSdp(responseBodyString);
-            
-            final Collection iceCandidates =
-                m_iceCandidateFactory.createCandidates(sdp);
-    
-            if (iceCandidates.isEmpty())
+            synchronized (this.m_socketLock)
                 {
-                // Give up when there are no ICE candidates.
-                LOG.warn("No ICE candidates!!");
+                m_socket = this.m_answerProcessor.processAnswer(responseBody);
                 }
-            else
-                {
-                this.m_iceCandidateTracker.visitCandidates(iceCandidates);
-        
-                try
-                    {
-                    synchronized (this.m_socketLock)
-                        {
-                        m_socket = m_iceCandidateTracker.getBestSocket();
-                        }
-                    
-                    LOG.trace("We resolved the UAC socket!!!");
-                    }
-                catch (final IceException e)
-                    {
-                    LOG.debug("Could not connect!!", e);
-                    }
-                }
+            
+            LOG.debug("We resolved the UAC socket!!!");
             }
-        catch (final SdpParseException e)
+        catch (final IOException e)
             {
-            LOG.warn("Could not parse SDP", e);
-            // TODO Send an error response.
-            }
-        catch (final SdpException e)
-            {
-            LOG.warn("Could not read SDP", e);
-            // TODO Send an error response.
+            LOG.debug("Could not resolve the socket", e);
             }
         finally
             {
@@ -271,13 +213,8 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
      */
     public void onTransactionFailed(final SipMessage response)
         {
-        LOG.warn("Request timed out...");
-
-        if (LOG.isDebugEnabled())
-            {
-            LOG.warn("Failed transaction after " + getElapsedTime() +
-                " milliseconds...");
-            }
+        LOG.warn("Failed transaction after " + getElapsedTime() +
+            " milliseconds...");
 
         // We know the status of the remote host, so make sure the socket
         // fails as quickly as possible.
