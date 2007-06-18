@@ -47,6 +47,7 @@ public final class SipProtocolSocketFactory implements ProtocolSocketFactory
     public Socket createSocket(final String host, final int port, 
         final InetAddress clientHost, final int clientPort)
         {
+        LOG.warn("Attempted unsupported socket call");
         throw new UnsupportedOperationException("not allowed");
         }
 
