@@ -64,6 +64,8 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
 
     private final AnswerProcessor m_answerProcessor;
 
+    private ByteBuffer m_offer;
+
     /**
      * Creates a new socket resolver that uses the specified collaborator
      * classes to create sockets using sip to initiate the session.  The
@@ -109,6 +111,7 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
         // Create the SDP string with addresses derived using STUN, TURN,
         // etc.
         final byte[] offer = this.m_offerGenerator.generateOffer();
+        this.m_offer = ByteBuffer.wrap(offer);
         this.m_sipClient.invite(sipUri, offer, this);
 
         return waitForSocket(sipUri);
@@ -184,13 +187,14 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
             }
         // Determine the ICE candidates for socket creation from the
         // response body.
-        final ByteBuffer responseBody = response.getBody();
+        final ByteBuffer answer = response.getBody();
         
         try
             {
             synchronized (this.m_socketLock)
                 {
-                m_socket = this.m_answerProcessor.processAnswer(responseBody);
+                m_socket = 
+                    this.m_answerProcessor.processAnswer(this.m_offer, answer);
                 }
             
             LOG.debug("We resolved the UAC socket!!!");
