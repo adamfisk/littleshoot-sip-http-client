@@ -6,8 +6,8 @@ import java.net.URI;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.lastbamboo.common.answer.AnswerProcessor;
-import org.lastbamboo.common.offer.OfferGenerator;
+import org.lastbamboo.common.ice.IceCandidateGenerator;
+import org.lastbamboo.common.ice.answer.IceAnswerProcessorFactory;
 import org.lastbamboo.common.sip.client.SipClient;
 import org.lastbamboo.common.sip.client.SipClientTracker;
 
@@ -24,24 +24,25 @@ public final class SipSocketFactoryImpl implements SipSocketFactory
 
     private final SipClientTracker m_sipClientTracker;
 
-    private final OfferGenerator m_offerGenerator;
+    private final IceCandidateGenerator m_offerGenerator;
 
-    private final AnswerProcessor m_answerProcessor;
+    private final IceAnswerProcessorFactory m_answerProcessorFactory;
     
     /**
      * Creates a new factory for creating SIP sockets.
      * 
      * @param offerGenerator The class for creating the offer to send with
      * the SIP INVITE message.
-     * @param answerProcessor The class for processing any answer received.
+     * @param answerProcessorFactory The class for creating processors for 
+     * answers.  
      * @param sipClientTracker The class for keeping track of SIP clients.
      */
-    public SipSocketFactoryImpl(final OfferGenerator offerGenerator,
-        final AnswerProcessor answerProcessor,
+    public SipSocketFactoryImpl(final IceCandidateGenerator offerGenerator,
+        final IceAnswerProcessorFactory answerProcessorFactory,
         final SipClientTracker sipClientTracker)
         {
         m_offerGenerator = offerGenerator;
-        m_answerProcessor = answerProcessor;
+        m_answerProcessorFactory = answerProcessorFactory;
         m_sipClientTracker = sipClientTracker;
         }
     
@@ -57,7 +58,7 @@ public final class SipSocketFactoryImpl implements SipSocketFactory
             }
         
         final SipSocketResolver resolver = new SipSocketResolverImpl (
-            this.m_offerGenerator, this.m_answerProcessor, client);
+            this.m_offerGenerator, this.m_answerProcessorFactory, client);
 
         return (resolver.resolveSocket (sipUri));
         }
