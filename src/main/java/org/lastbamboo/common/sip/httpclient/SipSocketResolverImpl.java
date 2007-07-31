@@ -3,16 +3,11 @@ package org.lastbamboo.common.sip.httpclient;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URI;
-import java.util.Collection;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.mina.common.ByteBuffer;
-import org.lastbamboo.common.ice.IceCandidateGenerator;
-import org.lastbamboo.common.ice.answer.IceAnswerProcessor;
-import org.lastbamboo.common.ice.answer.IceAnswerProcessorFactory;
-import org.lastbamboo.common.ice.candidate.IceCandidate;
-import org.lastbamboo.common.ice.sdp.IceCandidateSdpEncoder;
+import org.lastbamboo.common.offer.answer.OfferAnswer;
 import org.lastbamboo.common.sip.client.SipClient;
 import org.lastbamboo.common.sip.stack.message.SipMessage;
 import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionListener;
@@ -66,13 +61,7 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
      */
     private long m_startTime;
 
-    private final IceAnswerProcessorFactory m_answerProcessorFactory;
-
-    //private ByteBuffer m_offer;
-
-    private final IceCandidateGenerator m_candidateGenerator;
-
-    private Collection<IceCandidate> m_candidates;
+    private final OfferAnswer m_offerAnswer;
 
     /**
      * Creates a new socket resolver that uses the specified collaborator
@@ -81,22 +70,16 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
      * will return some class that either is a straight java.net.Socket or
      * a custom subclass.
      * 
-     * @param offerGenerator The class for creating the offer to send with
-     * the SIP INVITE message.
-     * @param answerProcessorFactory The factory for creating processors for
-     * answers.
+     * @param offerAnswer The class that generates an offer and processing an
+     * answer. 
      * @param sipClient The SIP client for sending SIP messages through a proxy.
      */
-    public SipSocketResolverImpl(final IceCandidateGenerator candidateGenerator,
-        final IceAnswerProcessorFactory answerProcessorFactory, 
+    public SipSocketResolverImpl(final OfferAnswer offerAnswer, 
         final SipClient sipClient)
         {
-        this.m_candidateGenerator = candidateGenerator;
-        //this.m_offerGenerator = offerGenerator;
-        this.m_answerProcessorFactory = answerProcessorFactory;
         this.m_sipClient = sipClient;
-
         this.m_finishedWaitingForSocket = false;
+        this.m_offerAnswer = offerAnswer;
         }
     
     /**
@@ -121,16 +104,15 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
         LOG.debug("Resolving socket for URI: "+sipUri);
         // Create the SDP string with addresses derived using STUN, TURN,
         // etc.
-        this.m_candidates = 
-            this.m_candidateGenerator.generateCandidates(true);
-        final IceCandidateSdpEncoder encoder = new IceCandidateSdpEncoder();
-        encoder.visitCandidates(m_candidates);
+        //final IceAgent agent = new IceAgentImpl(true);
+        final byte[] offer = this.m_offerAnswer.generateOffer();
+        //this.m_candidates = this.m_offerAnswer.gatherCandidates();
+        //final IceCandidateSdpEncoder encoder = new IceCandidateSdpEncoder();
+        //encoder.visitCandidates(m_candidates);
         
-        final byte[] sdp = encoder.getSdp();
+        //final byte[] sdp = encoder.getSdp();
         
-        //final byte[] offer = this.m_offerGenerator.generateOffer();
-        //this.m_offer = ByteBuffer.wrap(offer);
-        this.m_sipClient.invite(sipUri, sdp, this);
+        this.m_sipClient.invite(sipUri, offer, this);
 
         return waitForSocket(sipUri);
         }
@@ -211,9 +193,11 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
             {
             synchronized (this.m_socketLock)
                 {
-                final IceAnswerProcessor processor = 
-                    this.m_answerProcessorFactory.createProcessor();
-                m_socket = processor.processAnswer(this.m_candidates, answer);
+                //final IceAnswerProcessor processor = 
+                  //  this.m_answerProcessorFactory.createProcessor();
+                m_socket = this.m_offerAnswer.createSocket(answer); 
+                
+                //processor.processAnswer(this.m_candidates, answer);
                 
                 }
             

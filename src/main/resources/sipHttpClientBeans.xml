@@ -8,10 +8,10 @@
     -->
     <bean id="sipSocketFactory"
           class="org.lastbamboo.common.sip.httpclient.SipSocketFactoryImpl">
-        <constructor-arg><ref bean="iceCandidateGenerator"/></constructor-arg>
-        <constructor-arg><ref bean="iceAnswerProcessorFactory"/></constructor-arg>
+        <constructor-arg><ref bean="iceOfferAnswerFactory"/></constructor-arg>
         <constructor-arg><ref bean="sipClientTracker"/></constructor-arg>
     </bean>
+
 
     <!--
         The object used to create sockets for HttpClient for SIP sessions.
