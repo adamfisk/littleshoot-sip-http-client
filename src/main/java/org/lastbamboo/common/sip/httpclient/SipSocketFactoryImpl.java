@@ -51,9 +51,6 @@ public final class SipSocketFactoryImpl implements SipSocketFactory
                 "No available connections to SIP proxies!!");
             }
         
-        //final IceAgent agent = 
-          //  this.m_iceAgentFactory.createControllingIceAgent();
-        
         final OfferAnswer offerAnswer = 
             this.m_offerAnswerFactory.createOfferer();
         

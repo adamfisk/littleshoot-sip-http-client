@@ -102,15 +102,9 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
     public Socket resolveSocket(final URI sipUri) throws IOException
         {
         LOG.debug("Resolving socket for URI: "+sipUri);
-        // Create the SDP string with addresses derived using STUN, TURN,
-        // etc.
-        //final IceAgent agent = new IceAgentImpl(true);
-        final byte[] offer = this.m_offerAnswer.generateOffer();
-        //this.m_candidates = this.m_offerAnswer.gatherCandidates();
-        //final IceCandidateSdpEncoder encoder = new IceCandidateSdpEncoder();
-        //encoder.visitCandidates(m_candidates);
         
-        //final byte[] sdp = encoder.getSdp();
+        // Create the offer.  This will frequently be an ICE offer.
+        final byte[] offer = this.m_offerAnswer.generateOffer();
         
         this.m_sipClient.invite(sipUri, offer, this);
 
@@ -120,6 +114,7 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
     /**
      * Waits for the successful creation of a socket or a socket creation
      * error.
+     * 
      * @param sipUri The URI we're connecting to.
      * @return The new socket.
      * @throws IOException If there's any problem creating the socket.
