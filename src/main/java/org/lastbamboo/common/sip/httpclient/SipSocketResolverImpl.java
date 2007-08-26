@@ -7,7 +7,8 @@ import java.net.URI;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.mina.common.ByteBuffer;
-import org.lastbamboo.common.offer.answer.OfferAnswer;
+import org.lastbamboo.common.offer.answer.OfferAnswerListener;
+import org.lastbamboo.common.offer.answer.SocketOfferAnswer;
 import org.lastbamboo.common.sip.client.SipClient;
 import org.lastbamboo.common.sip.stack.message.SipMessage;
 import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionListener;
@@ -22,7 +23,7 @@ import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionListener
  * if it's tempting to do so.
  */
 public final class SipSocketResolverImpl implements SipSocketResolver,
-    SipTransactionListener
+    SipTransactionListener, OfferAnswerListener
     {
 
     /**
@@ -30,12 +31,6 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
      */
     private static final Log LOG =
         LogFactory.getLog(SipSocketResolverImpl.class);
-
-    /**
-     * The factory for creating SDP data for allowing the UAS in the
-     * session to contact us.
-     */
-    //rivate final OfferGenerator m_offerGenerator;
 
     /**
      * The generated socket.
@@ -61,7 +56,7 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
      */
     private long m_startTime;
 
-    private final OfferAnswer m_offerAnswer;
+    private final SocketOfferAnswer m_offerAnswer;
 
     /**
      * Creates a new socket resolver that uses the specified collaborator
@@ -70,11 +65,11 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
      * will return some class that either is a straight java.net.Socket or
      * a custom subclass.
      * 
-     * @param offerAnswer The class that generates an offer and processing an
+     * @param offerAnswer The class that generates an offer and processes an
      * answer. 
      * @param sipClient The SIP client for sending SIP messages through a proxy.
      */
-    public SipSocketResolverImpl(final OfferAnswer offerAnswer, 
+    public SipSocketResolverImpl(final SocketOfferAnswer offerAnswer, 
         final SipClient sipClient)
         {
         this.m_sipClient = sipClient;
@@ -131,7 +126,7 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
                 
                 try
                     {
-                    m_socketLock.wait();
+                    m_socketLock.wait(40 * 1000);
                     }
                 catch (final InterruptedException interruptedException)
                     {
@@ -186,28 +181,12 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
         
         try
             {
-            synchronized (this.m_socketLock)
-                {
-                //final IceAnswerProcessor processor = 
-                  //  this.m_answerProcessorFactory.createProcessor();
-                m_socket = this.m_offerAnswer.createSocket(answer); 
-                
-                //processor.processAnswer(this.m_candidates, answer);
-                
-                }
+            this.m_offerAnswer.processAnswer(answer, this);
             
-            LOG.debug("We resolved the UAC socket!!!");
             }
         catch (final IOException e)
             {
             LOG.debug("Could not resolve the socket", e);
-            }
-        finally
-            {
-            // We must always notify the socket lock, since it will wait for us
-            // forever.  A socket will only have been created in the absence of
-            // any problems.
-            notifySocketLock();
             }
         }
 
@@ -222,5 +201,18 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
         // We know the status of the remote host, so make sure the socket
         // fails as quickly as possible.
         notifySocketLock();
+        }
+
+    public void onOfferAnswerComplete()
+        {
+        try
+            {
+            m_socket = this.m_offerAnswer.createSocket();
+            LOG.debug("We resolved the UAC socket!!!");
+            }
+        finally
+            {
+            notifySocketLock();
+            }
         }
     }
