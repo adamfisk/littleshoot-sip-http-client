@@ -4,10 +4,6 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.URI;
 
-import org.lastbamboo.common.ice.IceAgent;
-import org.lastbamboo.common.ice.IceState;
-import org.lastbamboo.common.ice.IceStateListener;
-import org.lastbamboo.common.offer.answer.OfferAnswer;
 import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
 import org.lastbamboo.common.offer.answer.SocketOfferAnswer;
 import org.lastbamboo.common.sip.client.SipClient;
