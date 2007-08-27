@@ -208,7 +208,7 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
         notifySocketLock();
         }
 
-    public void onOfferAnswerComplete()
+    public void onOfferAnswerComplete(final MediaOfferAnswer offerAnswer)
         {
         try
             {
@@ -239,7 +239,7 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
                         }
                     }
                 };
-            this.m_offerAnswer.startMedia(mediaListener);
+            offerAnswer.startMedia(mediaListener);
             synchronized (socketRef)
                 {
                 if (socketRef.get() == null)
