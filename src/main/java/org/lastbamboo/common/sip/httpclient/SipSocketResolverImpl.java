@@ -3,12 +3,17 @@ package org.lastbamboo.common.sip.httpclient;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URI;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.mina.common.ByteBuffer;
 import org.lastbamboo.common.offer.answer.OfferAnswerListener;
-import org.lastbamboo.common.offer.answer.SocketOfferAnswer;
+import org.lastbamboo.common.offer.answer.MediaOfferAnswer;
+import org.lastbamboo.common.offer.answer.OfferAnswerMedia;
+import org.lastbamboo.common.offer.answer.OfferAnswerMediaListener;
+import org.lastbamboo.common.offer.answer.OfferAnswerMediaVisitor;
+import org.lastbamboo.common.offer.answer.OfferAnswerSocketMedia;
 import org.lastbamboo.common.sip.client.SipClient;
 import org.lastbamboo.common.sip.stack.message.SipMessage;
 import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionListener;
@@ -56,7 +61,7 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
      */
     private long m_startTime;
 
-    private final SocketOfferAnswer m_offerAnswer;
+    private final MediaOfferAnswer m_offerAnswer;
 
     /**
      * Creates a new socket resolver that uses the specified collaborator
@@ -69,7 +74,7 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
      * answer. 
      * @param sipClient The SIP client for sending SIP messages through a proxy.
      */
-    public SipSocketResolverImpl(final SocketOfferAnswer offerAnswer, 
+    public SipSocketResolverImpl(final MediaOfferAnswer offerAnswer, 
         final SipClient sipClient)
         {
         this.m_sipClient = sipClient;
@@ -207,8 +212,52 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
         {
         try
             {
-            m_socket = this.m_offerAnswer.createSocket();
-            LOG.debug("We resolved the UAC socket!!!");
+            final AtomicReference<Socket> socketRef =
+                new AtomicReference<Socket>();
+            final OfferAnswerMediaListener mediaListener = 
+                new OfferAnswerMediaListener()
+                {
+        
+                public void onMedia(final OfferAnswerMedia media)
+                    {
+                    final OfferAnswerMediaVisitor<Socket> visitor =
+                        new OfferAnswerMediaVisitor<Socket>()
+                        {
+        
+                        public Socket visitSocketMedia(
+                            final OfferAnswerSocketMedia socketMedia)
+                            {
+                            return socketMedia.getSocket();
+                            }
+                        
+                        };
+                    final Socket sock = media.accept(visitor);
+                    socketRef.set(sock);
+                    synchronized (socketRef)
+                        {
+                        socketRef.notify();
+                        }
+                    }
+                };
+            this.m_offerAnswer.startMedia(mediaListener);
+            synchronized (socketRef)
+                {
+                if (socketRef.get() == null)
+                    {
+                    try
+                        {
+                        socketRef.wait(30 * 1000);
+                        }
+                    catch (final InterruptedException e)
+                        {
+                        LOG.error("Interrupted??", e);
+                        }
+                    }
+                }
+
+            // There aren't visibility issues here because the socket 
+            // is volatile.
+            m_socket = socketRef.get();
             }
         finally
             {
