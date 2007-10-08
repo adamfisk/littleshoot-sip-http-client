@@ -3,6 +3,7 @@ package org.lastbamboo.common.sip.httpclient;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URI;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.logging.Log;
@@ -210,10 +211,12 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
 
     public void onOfferAnswerComplete(final MediaOfferAnswer offerAnswer)
         {
+        LOG.debug("Received offer/answer complete!!");
         try
             {
             final AtomicReference<Socket> socketRef =
                 new AtomicReference<Socket>();
+            final AtomicBoolean resolved = new AtomicBoolean(false);
             final OfferAnswerMediaListener mediaListener = 
                 new OfferAnswerMediaListener()
                 {
@@ -235,6 +238,7 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
                     socketRef.set(sock);
                     synchronized (socketRef)
                         {
+                        resolved.set(true);
                         socketRef.notify();
                         }
                     }
@@ -242,7 +246,7 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
             offerAnswer.startMedia(mediaListener);
             synchronized (socketRef)
                 {
-                if (socketRef.get() == null)
+                if (!resolved.get() && socketRef.get() == null)
                     {
                     try
                         {
