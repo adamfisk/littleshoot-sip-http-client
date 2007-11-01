@@ -268,4 +268,11 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
             notifySocketLock();
             }
         }
+    
+
+    public void onOfferAnswerFailed(MediaOfferAnswer mediaOfferAnswer)
+        {
+        notifySocketLock();
+        }
+
     }
