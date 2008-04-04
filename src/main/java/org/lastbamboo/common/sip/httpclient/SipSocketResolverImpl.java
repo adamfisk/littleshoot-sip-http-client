@@ -223,6 +223,7 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
         
                 public void onMedia(final OfferAnswerMedia media)
                     {
+                    LOG.debug("Received media event...");
                     final OfferAnswerMediaVisitor<Socket> visitor =
                         new OfferAnswerMediaVisitor<Socket>()
                         {
