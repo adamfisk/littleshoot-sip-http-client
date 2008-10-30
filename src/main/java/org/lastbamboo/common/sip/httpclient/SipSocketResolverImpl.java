@@ -6,11 +6,9 @@ import java.net.URI;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.mina.common.ByteBuffer;
-import org.lastbamboo.common.offer.answer.OfferAnswerListener;
 import org.lastbamboo.common.offer.answer.MediaOfferAnswer;
+import org.lastbamboo.common.offer.answer.OfferAnswerListener;
 import org.lastbamboo.common.offer.answer.OfferAnswerMedia;
 import org.lastbamboo.common.offer.answer.OfferAnswerMediaListener;
 import org.lastbamboo.common.offer.answer.OfferAnswerMediaVisitor;
@@ -18,6 +16,8 @@ import org.lastbamboo.common.offer.answer.OfferAnswerSocketMedia;
 import org.lastbamboo.common.sip.client.SipClient;
 import org.lastbamboo.common.sip.stack.message.SipMessage;
 import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class generates a socket using SIP to negotiate the session.  
@@ -35,8 +35,7 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
     /**
      * Logger for this class.
      */
-    private static final Log LOG =
-        LogFactory.getLog(SipSocketResolverImpl.class);
+    private final Logger m_log = LoggerFactory.getLogger(getClass());
 
     /**
      * The generated socket.
@@ -53,9 +52,11 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
     private final SipClient m_sipClient;
 
     /**
-     * Whether or not we've finished waiting for the socket.
+     * Whether or not we've finished waiting for the socket.  Note we use
+     * this flag in case the we're notified of the socket before we start to
+     * wait.
      */
-    private boolean m_finishedWaitingForSocket;
+    private boolean m_finishedWaitingForSocket = false;
 
     /**
      * The time we started resolving this socket.
@@ -79,7 +80,6 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
         final SipClient sipClient)
         {
         this.m_sipClient = sipClient;
-        this.m_finishedWaitingForSocket = false;
         this.m_offerAnswer = offerAnswer;
         }
     
@@ -102,7 +102,7 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
      */
     public Socket resolveSocket(final URI sipUri) throws IOException
         {
-        LOG.debug("Resolving socket for URI: "+sipUri);
+        m_log.debug("Resolving socket for URI: "+sipUri);
         
         // Create the offer.  This will frequently be an ICE offer.
         final byte[] offer = this.m_offerAnswer.generateOffer();
@@ -126,24 +126,26 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
             {
             m_startTime = System.currentTimeMillis();
             
-            while (!m_finishedWaitingForSocket)
+            // We use this flag in case we're notified of the socket before
+            // we start waiting.  We'd wait forever in that case without this 
+            // check.
+            if (!m_finishedWaitingForSocket)
                 {
-                LOG.trace("Waiting for socket...");
-                
+                m_log.trace("Waiting for socket...");
                 try
                     {
                     m_socketLock.wait(40 * 1000);
                     }
-                catch (final InterruptedException interruptedException)
+                catch (final InterruptedException e)
                     {
                     // Should never happen -- we don't use interrupts here.
-                    LOG.error("Unexpectedly interrupted", interruptedException);
+                    m_log.error("Unexpectedly interrupted", e);
                     }
                 }
 
             if (this.m_socket == null)
                 {
-                LOG.warn("Socket is null...");
+                m_log.warn("Socket is null...");
                 
                 // This notifies IceAgentImpl that it should close all its
                 // candidates.
@@ -153,7 +155,7 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
                 }
             else
                 {
-                LOG.trace("Returning socket!!");
+                m_log.trace("Returning socket!!");
                 return this.m_socket;
                 }
             }
@@ -168,18 +170,18 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
         {
         synchronized(this.m_socketLock)
             {
-            this.m_finishedWaitingForSocket = true;
+            m_finishedWaitingForSocket = true;
             this.m_socketLock.notify();
             }
         }
 
     public void onTransactionSucceeded(final SipMessage response) 
         {
-        LOG.trace("Received INVITE OK");
+        m_log.trace("Received INVITE OK");
 
-        if (LOG.isDebugEnabled())
+        if (m_log.isDebugEnabled())
             {
-            LOG.debug("Successful transaction after " + getElapsedTime() +
+            m_log.debug("Successful transaction after " + getElapsedTime() +
                 " milliseconds...");
             }
         // Determine the ICE candidates for socket creation from the
@@ -190,12 +192,9 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
         this.m_offerAnswer.processAnswer(answer, this);
         }
 
-    /**
-     * {@inheritDoc}
-     */
     public void onTransactionFailed(final SipMessage response)
         {
-        LOG.warn("Failed transaction after " + getElapsedTime() +
+        m_log.warn("Failed transaction after " + getElapsedTime() +
             " milliseconds...");
 
         // We know the status of the remote host, so make sure the socket
@@ -205,7 +204,7 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
 
     public void onOfferAnswerComplete(final MediaOfferAnswer offerAnswer)
         {
-        LOG.debug("Received offer/answer complete!!");
+        m_log.debug("Received offer/answer complete!!");
         try
             {
             final AtomicReference<Socket> socketRef =
@@ -217,7 +216,7 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
         
                 public void onMedia(final OfferAnswerMedia media)
                     {
-                    LOG.debug("Received media event...");
+                    m_log.debug("Received media event...");
                     final OfferAnswerMediaVisitor<Socket> visitor =
                         new OfferAnswerMediaVisitor<Socket>()
                         {
@@ -249,7 +248,7 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
                         }
                     catch (final InterruptedException e)
                         {
-                        LOG.error("Interrupted??", e);
+                        m_log.error("Interrupted??", e);
                         }
                     }
                 }
