@@ -169,10 +169,7 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
             }
         }
 
-    /**
-     * {@inheritDoc}
-     */
-    public void onTransactionSucceeded(final SipMessage response)
+    public void onTransactionSucceeded(final SipMessage response) 
         {
         LOG.trace("Received INVITE OK");
 
@@ -192,7 +189,8 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
             }
         catch (final IOException e)
             {
-            LOG.debug("Could not resolve the socket", e);
+            LOG.debug("Error processing the answer from the remote host", e);
+            notifySocketLock();
             }
         }
 
@@ -271,7 +269,7 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
         }
     
 
-    public void onOfferAnswerFailed(MediaOfferAnswer mediaOfferAnswer)
+    public void onOfferAnswerFailed(final MediaOfferAnswer mediaOfferAnswer)
         {
         notifySocketLock();
         }
