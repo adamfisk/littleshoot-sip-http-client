@@ -144,6 +144,10 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
             if (this.m_socket == null)
                 {
                 LOG.warn("Socket is null...");
+                
+                // This notifies IceAgentImpl that it should close all its
+                // candidates.
+                m_offerAnswer.close();
                 throw new IOException("Could not connect to remote host: "+
                     sipUri);
                 }

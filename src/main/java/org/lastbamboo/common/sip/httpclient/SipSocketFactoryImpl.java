@@ -4,10 +4,12 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.URI;
 
+import org.lastbamboo.common.offer.answer.OfferAnswerConnectException;
 import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
 import org.lastbamboo.common.offer.answer.MediaOfferAnswer;
 import org.lastbamboo.common.sip.client.SipClient;
 import org.lastbamboo.common.sip.client.SipClientTracker;
+import org.lastbamboo.common.util.IoExceptionWithCause;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,8 +53,15 @@ public final class SipSocketFactoryImpl implements SipSocketFactory
                 "No available connections to SIP proxies!!");
             }
         
-        final MediaOfferAnswer offerAnswer = 
-            this.m_offerAnswerFactory.createMediaOfferer();
+        final MediaOfferAnswer offerAnswer;
+        try
+            {
+            offerAnswer = this.m_offerAnswerFactory.createMediaOfferer();
+            }
+        catch (final OfferAnswerConnectException e)
+            {
+            throw new IoExceptionWithCause("Could not create offer!!", e);
+            }
         
         final SipSocketResolver resolver = 
             new SipSocketResolverImpl(offerAnswer, client);
