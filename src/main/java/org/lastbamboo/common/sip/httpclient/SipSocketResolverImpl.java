@@ -182,16 +182,8 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
         // response body.
         final ByteBuffer answer = response.getBody();
         
-        try
-            {
-            this.m_offerAnswer.processAnswer(answer, this);
-            
-            }
-        catch (final IOException e)
-            {
-            LOG.debug("Error processing the answer from the remote host", e);
-            notifySocketLock();
-            }
+        // This is responsible for notifying listeners on errors.
+        this.m_offerAnswer.processAnswer(answer, this);
         }
 
     /**
