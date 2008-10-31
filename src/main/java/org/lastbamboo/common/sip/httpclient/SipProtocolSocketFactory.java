@@ -78,7 +78,13 @@ public final class SipProtocolSocketFactory implements ProtocolSocketFactory
         try 
             {
             LOG.trace("About to create socket...");
-            return this.m_sipSocketFactory.createSipSocket(sipUri);
+            final Socket sock = this.m_sipSocketFactory.createSipSocket(sipUri);
+            LOG.debug("Got socket!! Returning to HttpClient");
+            
+            // Note there can appear to be an odd delay after this point if
+            // you're just looking at the raw logs, but it's due to HttpClient
+            // actually making the HTTP request and getting a response.
+            return sock;
             }
         catch (final IOException e)
             {
