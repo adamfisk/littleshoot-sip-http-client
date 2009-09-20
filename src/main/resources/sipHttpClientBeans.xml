@@ -6,7 +6,7 @@
         The object used for creating java.net.Socket instances using SIP to
         signal the connection.
     -->
-    <bean id="sipSocketFactory"
+    <bean lazy-init="true" id="sipSocketFactory"
           class="org.lastbamboo.common.sip.httpclient.SipSocketFactoryImpl">
         <constructor-arg><ref bean="iceOfferAnswerFactory"/></constructor-arg>
         <constructor-arg><ref bean="sipClientTracker"/></constructor-arg>
@@ -16,7 +16,7 @@
     <!--
         The object used to create sockets for HttpClient for SIP sessions.
     -->
-    <bean id="sipProtocolSocketFactory"
+    <bean lazy-init="true" id="sipProtocolSocketFactory"
           class="org.lastbamboo.common.sip.httpclient.SipProtocolSocketFactory">
         <constructor-arg><ref local="sipSocketFactory"/></constructor-arg>
         <constructor-arg><ref bean="sipUriFactory"/></constructor-arg>
@@ -25,7 +25,7 @@
     <!--
         The HttpClient Protocol backed by our SIP sockets.
     -->
-    <bean id="sipProtocol"
+    <bean lazy-init="true" id="sipProtocol"
         class="org.apache.commons.httpclient.protocol.Protocol">
         <constructor-arg type="java.lang.String"><value>sip</value></constructor-arg>
         <constructor-arg><ref local="sipProtocolSocketFactory"/></constructor-arg>
@@ -35,7 +35,7 @@
     <!--
         Calls the static method to register our custom protocol.
     -->
-    <bean id="registerProtocol"
+    <bean lazy-init="true" id="registerProtocol"
         class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
         <property name="staticMethod">
             <value>org.apache.commons.httpclient.protocol.Protocol.registerProtocol</value>
