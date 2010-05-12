@@ -127,7 +127,7 @@ public final class SipSocketResolverImpl implements SipSocketResolver,
             m_startTime = System.currentTimeMillis();
             
             // We use this flag in case we're notified of the socket before
-            // we start waiting.  We'd wait forever in that case without this 
+            // we start waiting. We'd wait forever in that case without this 
             // check.
             if (!m_finishedWaitingForSocket)
                 {
