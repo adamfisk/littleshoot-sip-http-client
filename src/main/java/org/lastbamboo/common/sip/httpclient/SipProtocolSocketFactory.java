@@ -68,8 +68,8 @@ public final class SipProtocolSocketFactory implements ProtocolSocketFactory
         final long id = prefs.getLong("LITTLESHOOT_ID", -1);
         if (id == Long.parseLong(host))
             {
-            // This is an error because we should just streamed it locally
-            // if we have the file.
+            // This is an error because we should just stream it locally
+            // if we have the file (we're trying to connect to ourselves!).
             LOG.error("Ignoring request to download from ourselves...");
             throw new IOException("Not downloading from ourselves...");
             }
