@@ -5,26 +5,19 @@
     <!--
         The object used for creating java.net.Socket instances using SIP to
         signal the connection.
-    -->
+    
     <bean id="sipSocketFactory"
           class="org.lastbamboo.common.sip.httpclient.SipSocketFactoryImpl">
         <constructor-arg><ref bean="iceOfferAnswerFactory"/></constructor-arg>
         <constructor-arg><ref bean="sipClientTracker"/></constructor-arg>
     </bean>
 
-
-    <!--
-        The object used to create sockets for HttpClient for SIP sessions.
-    -->
     <bean id="sipProtocolSocketFactory"
           class="org.lastbamboo.common.sip.httpclient.SipProtocolSocketFactory">
         <constructor-arg><ref local="sipSocketFactory"/></constructor-arg>
         <constructor-arg><ref bean="sipUriFactory"/></constructor-arg>
         </bean>
 
-    <!--
-        The HttpClient Protocol backed by our SIP sockets.
-    -->
     <bean id="sipProtocol"
         class="org.apache.commons.httpclient.protocol.Protocol">
         <constructor-arg type="java.lang.String"><value>sip</value></constructor-arg>
@@ -32,9 +25,6 @@
         <constructor-arg type="int"><value>80</value></constructor-arg>
         </bean>
 
-    <!--
-        Calls the static method to register our custom protocol.
-    -->
     <bean id="registerProtocol"
         class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
         <property name="staticMethod">
@@ -47,4 +37,5 @@
                 </list>
             </property>
         </bean>
+        -->
     </beans>
