@@ -10,8 +10,8 @@ import java.util.prefs.Preferences;
 import org.apache.commons.httpclient.ConnectTimeoutException;
 import org.apache.commons.httpclient.params.HttpConnectionParams;
 import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.lastbamboo.common.sip.stack.SipUriFactory;
 
 /**
@@ -23,8 +23,7 @@ public final class SipProtocolSocketFactory implements ProtocolSocketFactory
     /**
      * Logger for this class.
      */
-    private static final Log LOG = 
-        LogFactory.getLog(SipProtocolSocketFactory.class);
+    private final Logger LOG = LoggerFactory.getLogger(SipProtocolSocketFactory.class);
     
     private final SipSocketFactory m_sipSocketFactory;
 
