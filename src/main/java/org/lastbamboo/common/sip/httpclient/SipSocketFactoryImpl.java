@@ -4,12 +4,10 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.URI;
 
-import org.lastbamboo.common.offer.answer.OfferAnswerConnectException;
 import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
-import org.lastbamboo.common.offer.answer.MediaOfferAnswer;
+import org.lastbamboo.common.rudp.RudpService;
 import org.lastbamboo.common.sip.client.SipClient;
 import org.lastbamboo.common.sip.client.SipClientTracker;
-import org.lastbamboo.common.util.IoExceptionWithCause;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,20 +24,24 @@ public final class SipSocketFactoryImpl implements SipSocketFactory
 
     private final SipClientTracker m_sipClientTracker;
 
+    private final RudpService m_rudpService;
+
     private final OfferAnswerFactory m_offerAnswerFactory;
-    
+
     /**
      * Creates a new factory for creating SIP sockets.
-     * @param offerAnswerFactory 
-     * 
+     *
      * @param sipClientTracker The class for keeping track of SIP clients.
+     * @param rudpService The reliable UDP socket service.
+     * @param offerAnswerFactory Factory for creating offers and answers.
      */
-    public SipSocketFactoryImpl(
-        final OfferAnswerFactory offerAnswerFactory,
-        final SipClientTracker sipClientTracker)
+    public SipSocketFactoryImpl(final SipClientTracker sipClientTracker,
+        final RudpService rudpService, 
+        final OfferAnswerFactory offerAnswerFactory)
         {
-        m_offerAnswerFactory = offerAnswerFactory;
-        m_sipClientTracker = sipClientTracker;
+        this.m_sipClientTracker = sipClientTracker;
+        this.m_rudpService = rudpService;
+        this.m_offerAnswerFactory = offerAnswerFactory;
         }
     
     public Socket createSipSocket (final URI sipUri) throws IOException
@@ -53,19 +55,10 @@ public final class SipSocketFactoryImpl implements SipSocketFactory
                 "No available connections to SIP proxies!!");
             }
         
-        final MediaOfferAnswer offerAnswer;
-        try
-            {
-            offerAnswer = this.m_offerAnswerFactory.createMediaOfferer();
-            }
-        catch (final OfferAnswerConnectException e)
-            {
-            throw new IoExceptionWithCause("Could not create offer!!", e);
-            }
+        final TcpUdpSocket tcpUdpSocket = 
+            new DefaultTcpUdpSocket(client, this.m_rudpService,
+                this.m_offerAnswerFactory);
         
-        final SipSocketResolver resolver = 
-            new SipSocketResolverImpl(offerAnswer, client);
-
-        return (resolver.resolveSocket (sipUri));
+        return tcpUdpSocket.newSocket(sipUri);
         }
     }
