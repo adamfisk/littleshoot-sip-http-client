@@ -84,7 +84,7 @@ public class DefaultTcpUdpSocket implements TcpUdpSocket,
                 m_log.trace("Waiting for socket...");
                 try
                     {
-                    m_socketLock.wait(16 * 1000);
+                    m_socketLock.wait(18 * 1000);
                     }
                 catch (final InterruptedException e)
                     {
