@@ -5,7 +5,6 @@ import java.net.Socket;
 import java.net.URI;
 
 import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
-import org.lastbamboo.common.rudp.RudpService;
 import org.lastbamboo.common.sip.client.SipClient;
 import org.lastbamboo.common.sip.client.SipClientTracker;
 import org.slf4j.Logger;
@@ -24,24 +23,23 @@ public final class SipSocketFactoryImpl implements SipSocketFactory
 
     private final SipClientTracker m_sipClientTracker;
 
-    private final RudpService m_rudpService;
-
     private final OfferAnswerFactory m_offerAnswerFactory;
+
+    private final int m_relayWaitTime;
 
     /**
      * Creates a new factory for creating SIP sockets.
      *
      * @param sipClientTracker The class for keeping track of SIP clients.
-     * @param rudpService The reliable UDP socket service.
      * @param offerAnswerFactory Factory for creating offers and answers.
+     * @param relayWaitTime The number of seconds to wait before using a relay.
      */
     public SipSocketFactoryImpl(final SipClientTracker sipClientTracker,
-        final RudpService rudpService, 
-        final OfferAnswerFactory offerAnswerFactory)
+        final OfferAnswerFactory offerAnswerFactory, final int relayWaitTime)
         {
         this.m_sipClientTracker = sipClientTracker;
-        this.m_rudpService = rudpService;
         this.m_offerAnswerFactory = offerAnswerFactory;
+        this.m_relayWaitTime = relayWaitTime;
         }
     
     public Socket createSipSocket (final URI sipUri) throws IOException
@@ -56,8 +54,8 @@ public final class SipSocketFactoryImpl implements SipSocketFactory
             }
         
         final TcpUdpSocket tcpUdpSocket = 
-            new DefaultTcpUdpSocket(client, this.m_rudpService,
-                this.m_offerAnswerFactory);
+            new DefaultTcpUdpSocket(client, this.m_offerAnswerFactory,
+                this.m_relayWaitTime);
         
         return tcpUdpSocket.newSocket(sipUri);
         }

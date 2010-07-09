@@ -23,7 +23,8 @@ public final class SipProtocolSocketFactory implements ProtocolSocketFactory
     /**
      * Logger for this class.
      */
-    private final Logger LOG = LoggerFactory.getLogger(SipProtocolSocketFactory.class);
+    private final Logger m_log = 
+        LoggerFactory.getLogger(SipProtocolSocketFactory.class);
     
     private final SipSocketFactory m_sipSocketFactory;
 
@@ -46,7 +47,7 @@ public final class SipProtocolSocketFactory implements ProtocolSocketFactory
     public Socket createSocket(final String host, final int port, 
         final InetAddress clientHost, final int clientPort)
         {
-        LOG.warn("Attempted unsupported socket call");
+        m_log.warn("Attempted unsupported socket call");
         throw new UnsupportedOperationException("not allowed");
         }
 
@@ -55,30 +56,30 @@ public final class SipProtocolSocketFactory implements ProtocolSocketFactory
         final HttpConnectionParams params) throws IOException, 
         UnknownHostException, ConnectTimeoutException
         {
-        LOG.trace("Creating a socket for user: "+host);
+        m_log.trace("Creating a socket for user: "+host);
         return createSocket(host, port);
         }
     
     public Socket createSocket(final String host, final int port) 
         throws IOException, UnknownHostException
         {
-        LOG.trace("Creating a socket for user: "+host);
+        m_log.trace("Creating a socket for user: "+host);
         final Preferences prefs = Preferences.userRoot();
         final long id = prefs.getLong("LITTLESHOOT_ID", -1);
         if (id == Long.parseLong(host))
             {
             // This is an error because we should just stream it locally
             // if we have the file (we're trying to connect to ourselves!).
-            LOG.error("Ignoring request to download from ourselves...");
+            m_log.error("Ignoring request to download from ourselves...");
             throw new IOException("Not downloading from ourselves...");
             }
         
         final URI sipUri = this.m_sipUriFactory.createSipUri(host);
         try 
             {
-            LOG.trace("About to create socket...");
+            m_log.trace("About to create socket...");
             final Socket sock = this.m_sipSocketFactory.createSipSocket(sipUri);
-            LOG.debug("Got socket!! Returning to HttpClient");
+            m_log.debug("Got socket!! Returning to HttpClient");
             
             // Note there can appear to be an odd delay after this point if
             // you're just looking at the raw logs, but it's due to HttpClient
@@ -87,7 +88,7 @@ public final class SipProtocolSocketFactory implements ProtocolSocketFactory
             }
         catch (final IOException e)
             {
-            LOG.warn("Exception creating SIP socket", e);
+            m_log.warn("Exception creating SIP socket", e);
             throw e;
             }
         }

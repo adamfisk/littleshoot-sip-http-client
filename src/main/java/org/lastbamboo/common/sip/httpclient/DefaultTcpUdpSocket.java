@@ -9,7 +9,6 @@ import org.lastbamboo.common.offer.answer.OfferAnswer;
 import org.lastbamboo.common.offer.answer.OfferAnswerConnectException;
 import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
 import org.lastbamboo.common.offer.answer.OfferAnswerListener;
-import org.lastbamboo.common.rudp.RudpService;
 import org.lastbamboo.common.sip.client.SipClient;
 import org.lastbamboo.common.sip.stack.message.SipMessage;
 import org.lastbamboo.common.sip.stack.transaction.client.SipTransactionListener;
@@ -29,24 +28,40 @@ public class DefaultTcpUdpSocket implements TcpUdpSocket,
     private final long m_startTime = System.currentTimeMillis();
     
     private final Object m_socketLock = new Object();
+    
+    /**
+     * Lock for waiting for just the answer. We then create the socket using
+     * the data from the answer.
+     */
+    private final Object m_answerLock = new Object();
+    
+    /**
+     * Flag for whether or not we've received an answer.
+     */
+    private volatile boolean m_gotAnswer;
+    
     private volatile Socket m_socket;
     private volatile boolean m_finishedWaitingForSocket;
+    
     private final SipClient m_sipClient;
     private final OfferAnswer m_offerAnswer;
+    private final int m_relayWaitTime;
     
     /**
      * Creates a new reliable TCP or UDP socket.
      * 
      * @param sipClient The client connection to the SIP server.
-     * @param rudpService The reliable UDP service.
      * @param offerAnswerFactory The class for creating new offers and answers.
+     * @param relayWaitTime The number of seconds to wait before using the 
+     * relay.
      * @throws IOException If there's an error connecting.
      */
     public DefaultTcpUdpSocket(final SipClient sipClient,
-        final RudpService rudpService,
-        final OfferAnswerFactory offerAnswerFactory) throws IOException
+        final OfferAnswerFactory offerAnswerFactory,
+        final int relayWaitTime) throws IOException
         {
         this.m_sipClient = sipClient;
+        this.m_relayWaitTime = relayWaitTime;
         try
             {
             this.m_offerAnswer = offerAnswerFactory.createOfferer(this);
@@ -74,8 +89,25 @@ public class DefaultTcpUdpSocket implements TcpUdpSocket,
      */
     private Socket waitForSocket(final URI sipUri) throws IOException
         {
+        synchronized (this.m_answerLock)
+            {
+            if (!this.m_gotAnswer)
+                {
+                try 
+                    {
+                    this.m_answerLock.wait(20 * 1000);
+                    } 
+                catch (final InterruptedException e) 
+                    {
+                    m_log.error("Interrupted?", e);
+                    }
+                }
+            }
+    
+        m_log.info("Got answer...");
         synchronized (this.m_socketLock)
             {
+            
             // We use this flag in case we're notified of the socket before
             // we start waiting. We'd wait forever in that case without this 
             // check.
@@ -84,7 +116,8 @@ public class DefaultTcpUdpSocket implements TcpUdpSocket,
                 m_log.trace("Waiting for socket...");
                 try
                     {
-                    m_socketLock.wait(18 * 1000);
+                    // We add one to make sure we don't sleep forever.
+                    m_socketLock.wait((this.m_relayWaitTime * 1000) + 1);
                     }
                 catch (final InterruptedException e)
                     {
@@ -156,6 +189,13 @@ public class DefaultTcpUdpSocket implements TcpUdpSocket,
         // Determine the ICE candidates for socket creation from the
         // response body.
         final ByteBuffer answer = response.getBody();
+        
+        m_gotAnswer = true;
+        
+        synchronized (this.m_answerLock) 
+            {
+            this.m_answerLock.notifyAll();
+            }
         
         // This is responsible for notifying listeners on errors.
         this.m_offerAnswer.processAnswer(answer);
