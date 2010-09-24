@@ -240,7 +240,7 @@ public class DefaultTcpUdpSocket implements TcpUdpSocket,
         {
         if (m_socket != null)
             {
-            m_log.info("Ignoring TCP socket");
+            m_log.info("Ignoring socket");
             try
                 {
                 sock.close();
