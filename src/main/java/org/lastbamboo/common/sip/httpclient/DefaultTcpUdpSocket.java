@@ -133,9 +133,11 @@ public class DefaultTcpUdpSocket implements TcpUdpSocket,
                 m_log.info("Could not create direct connection - using relay!");
                 this.m_offerAnswer.useRelay();
                 m_log.trace("Waiting for socket...");
+                // We sometimes have to wait for awhile for resolution, 
+                // especially if we're accessing a file from around the world!!
                 try
                     {
-                    m_socketLock.wait(20 * 1000);
+                    m_socketLock.wait(35 * 1000);
                     }
                 catch (final InterruptedException e)
                     {
