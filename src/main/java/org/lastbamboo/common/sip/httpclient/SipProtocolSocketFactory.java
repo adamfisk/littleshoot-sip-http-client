@@ -56,14 +56,14 @@ public final class SipProtocolSocketFactory implements ProtocolSocketFactory
         final HttpConnectionParams params) throws IOException, 
         UnknownHostException, ConnectTimeoutException
         {
-        m_log.trace("Creating a socket for user: "+host);
+        m_log.trace("Creating a socket for user: {}", host);
         return createSocket(host, port);
         }
     
     public Socket createSocket(final String host, final int port) 
         throws IOException, UnknownHostException
         {
-        m_log.trace("Creating a socket for user: "+host);
+        m_log.trace("Creating a socket for user: {}", host);
         final Preferences prefs = Preferences.userRoot();
         final long id = prefs.getLong("LITTLESHOOT_ID", -1);
         if (id == Long.parseLong(host))
@@ -78,7 +78,7 @@ public final class SipProtocolSocketFactory implements ProtocolSocketFactory
         try 
             {
             m_log.trace("About to create socket...");
-            final Socket sock = this.m_sipSocketFactory.createSipSocket(sipUri);
+            final Socket sock = this.m_sipSocketFactory.newSocket(sipUri);
             m_log.debug("Got socket!! Returning to HttpClient");
             
             // Note there can appear to be an odd delay after this point if

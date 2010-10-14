@@ -19,6 +19,6 @@ public interface SipSocketFactory
      * @throws IOException If the socket could not be created for any reason,
      * such as an unsupported media type or a network error.
      */
-    Socket createSipSocket(final URI sipUri) throws IOException;
+    Socket newSocket(URI sipUri) throws IOException;
 
     }

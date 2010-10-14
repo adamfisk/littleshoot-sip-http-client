@@ -5,6 +5,8 @@ import java.net.Socket;
 import java.net.URI;
 
 import org.lastbamboo.common.offer.answer.OfferAnswerFactory;
+import org.lastbamboo.common.p2p.DefaultTcpUdpSocket;
+import org.lastbamboo.common.p2p.TcpUdpSocket;
 import org.lastbamboo.common.sip.client.SipClient;
 import org.lastbamboo.common.sip.client.SipClientTracker;
 import org.slf4j.Logger;
@@ -42,9 +44,9 @@ public final class SipSocketFactoryImpl implements SipSocketFactory
         this.m_relayWaitTime = relayWaitTime;
         }
     
-    public Socket createSipSocket (final URI sipUri) throws IOException
+    public Socket newSocket (final URI sipUri) throws IOException
         {
-        m_log.trace ("Creating SIP socket for URI: " + sipUri);
+        m_log.trace ("Creating SIP socket for URI: {}", sipUri);
         final SipClient client = this.m_sipClientTracker.getSipClient();
         if (client == null)
             {
