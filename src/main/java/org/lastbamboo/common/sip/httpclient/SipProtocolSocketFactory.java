@@ -13,6 +13,7 @@ import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.lastbamboo.common.sip.stack.SipUriFactory;
+import org.lastbamboo.common.util.SocketFactory;
 
 /**
  * Socket factory for creating SIP-negotiated sockets for HTTP clients.
@@ -26,7 +27,7 @@ public final class SipProtocolSocketFactory implements ProtocolSocketFactory
     private final Logger m_log = 
         LoggerFactory.getLogger(SipProtocolSocketFactory.class);
     
-    private final SipSocketFactory m_sipSocketFactory;
+    private final SocketFactory m_sipSocketFactory;
 
     private final SipUriFactory m_sipUriFactory;
 
@@ -37,7 +38,7 @@ public final class SipProtocolSocketFactory implements ProtocolSocketFactory
      * @param sipUriFactory The class for creating SIP URIs from the host
      * names from HTTP client.
      */
-    public SipProtocolSocketFactory(final SipSocketFactory sipSocketFactory,
+    public SipProtocolSocketFactory(final SocketFactory sipSocketFactory,
         final SipUriFactory sipUriFactory)
         {
         this.m_sipSocketFactory = sipSocketFactory;
