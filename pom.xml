@@ -31,6 +31,7 @@
             <artifactId>lastbamboo-common-ice</artifactId>
             </dependency>
 
+<!--
         <dependency>
             <groupId>org.lastbamboo</groupId>
             <artifactId>lastbamboo-common-ice-rudp</artifactId>
@@ -40,7 +41,8 @@
             <groupId>org.lastbamboo</groupId>
             <artifactId>lastbamboo-common-rudp</artifactId>
             </dependency>
-            
+-->    
+        
         <dependency>
             <groupId>org.lastbamboo</groupId>
             <artifactId>lastbamboo-common-sip-client</artifactId>
