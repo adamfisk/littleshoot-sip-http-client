@@ -29,19 +29,13 @@ public final class SipProtocolSocketFactory implements ProtocolSocketFactory {
     
     private final SocketFactory m_sipSocketFactory;
 
-    private final SipUriFactory m_sipUriFactory;
-
     /**
      * Creates a new factory for creating sockets from SIP URIs.
      * 
      * @param sipSocketFactory The factory that actually creates the sockets.
-     * @param sipUriFactory The class for creating SIP URIs from the host
-     * names from HTTP client.
      */
-    public SipProtocolSocketFactory(final SocketFactory sipSocketFactory,
-            final SipUriFactory sipUriFactory) {
+    public SipProtocolSocketFactory(final SocketFactory sipSocketFactory) {
         this.m_sipSocketFactory = sipSocketFactory;
-        this.m_sipUriFactory = sipUriFactory;
     }
 
     public Socket createSocket(final String host, final int port,
@@ -70,7 +64,7 @@ public final class SipProtocolSocketFactory implements ProtocolSocketFactory {
             throw new IOException("Not downloading from ourselves...");
         }
 
-        final URI sipUri = this.m_sipUriFactory.createSipUri(host);
+        final URI sipUri = SipUriFactory.createSipUri(host);
         try {
             m_log.trace("About to create socket...");
             final Socket sock = this.m_sipSocketFactory.newSocket(sipUri);
