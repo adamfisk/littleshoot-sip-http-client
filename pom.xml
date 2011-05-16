@@ -7,24 +7,6 @@
     <name>LittleShoot HTTP Client Integration with SIP</name>
     <url>http://www.littleshoot.org</url>
 
-    <organization>
-        <name>LittleShoot</name>
-        <url>http://www.littleshoot.org</url>
-    </organization>
-
-    <properties>
-         <slf4j.version>1.6.1</slf4j.version>
-         <ls.version>1.0-SNAPSHOT</ls.version>
-    </properties>
-
-    <licenses>
-        <license>
-            <name>GNU General Public License Version 2</name> 
-            <url>http://www.gnu.org/licenses/gpl.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
     <parent>
         <groupId>org.littleshoot</groupId>
         <artifactId>parent</artifactId>
@@ -37,24 +19,12 @@
         <url>https://adamfisk@github.com/adamfisk/littleshoot-sip-http-client.git</url>
     </scm>
 
-    <developers>
-        <developer>
-            <id>adamfisk</id>
-            <name>Adam Fisk</name>
-            <email>a@littleshoot.org</email>
-            <organization>LittleShoot</organization>
-            <organizationUrl>http://www.littleshoot.org/</organizationUrl>
-            <roles><role>Developer</role></roles>
-            <timezone>-5</timezone>
-        </developer>
-    </developers>
-
     <dependencies>
 
         <dependency>
             <groupId>org.littleshoot</groupId>
-            <artifactId>ice</artifactId>
-            <version>${ls.version}</version>
+            <artifactId>littleshoot-ice</artifactId>
+            <version>${project.version}</version>
         </dependency> 
 
         <dependency>
@@ -66,45 +36,20 @@
         <dependency>
             <groupId>org.littleshoot</groupId>
             <artifactId>p2p-sockets</artifactId>
-            <version>${ls.version}</version>
+            <version>${project.version}</version>
         </dependency> 
 
         <dependency>
             <groupId>org.littleshoot</groupId>
             <artifactId>sip-client</artifactId>
-            <version>${ls.version}</version>
+            <version>${project.version}</version>
         </dependency> 
 
         <dependency>
             <groupId>org.littleshoot</groupId>
             <artifactId>util</artifactId>
-            <version>${ls.version}</version>
+            <version>${project.version}</version>
         </dependency> 
-
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.8.2</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>1.2.16</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
 
     </dependencies>
 
