@@ -10,6 +10,7 @@ import java.util.prefs.Preferences;
 import org.apache.commons.httpclient.ConnectTimeoutException;
 import org.apache.commons.httpclient.params.HttpConnectionParams;
 import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
+import org.apache.commons.io.IOExceptionWithCause;
 import org.lastbamboo.common.offer.answer.NoAnswerException;
 import org.lastbamboo.common.p2p.SocketFactory;
 import org.lastbamboo.common.sip.stack.SipUriFactory;
@@ -76,7 +77,7 @@ public final class SipProtocolSocketFactory implements ProtocolSocketFactory {
             return sock;
         } catch (final NoAnswerException e) {
             m_log.warn("No answer!!", e);
-            throw e;
+            throw new IOExceptionWithCause(e);
         } catch (final IOException e) {
             m_log.warn("Exception creating SIP socket", e);
             throw e;
