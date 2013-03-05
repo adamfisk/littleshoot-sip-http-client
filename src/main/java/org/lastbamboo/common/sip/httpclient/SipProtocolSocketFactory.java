@@ -28,14 +28,14 @@ public final class SipProtocolSocketFactory implements ProtocolSocketFactory {
     private final Logger m_log = 
         LoggerFactory.getLogger(SipProtocolSocketFactory.class);
     
-    private final SocketFactory m_sipSocketFactory;
+    private final SocketFactory<Socket> m_sipSocketFactory;
 
     /**
      * Creates a new factory for creating sockets from SIP URIs.
      * 
      * @param sipSocketFactory The factory that actually creates the sockets.
      */
-    public SipProtocolSocketFactory(final SocketFactory sipSocketFactory) {
+    public SipProtocolSocketFactory(final SocketFactory<Socket> sipSocketFactory) {
         this.m_sipSocketFactory = sipSocketFactory;
     }
 
