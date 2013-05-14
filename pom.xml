@@ -3,7 +3,7 @@
     <groupId>org.littleshoot</groupId>
     <artifactId>sip-http-client</artifactId>
     <packaging>jar</packaging>
-    <version>1.0.3-SNAPSHOT</version>
+    <version>1.0.3</version>
     <name>LittleShoot HTTP Client Integration with SIP</name>
     <url>http://www.littleshoot.org</url>
 
